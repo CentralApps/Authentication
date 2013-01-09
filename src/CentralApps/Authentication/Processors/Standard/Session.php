@@ -22,7 +22,7 @@ class Session implements CentralApps\Authentication\Processors\SessionInterface 
 	
 	public function logout()
 	{
-		//unset()
+		unset($_SESSION[$this->sessionName]);
 	}
 	
 }

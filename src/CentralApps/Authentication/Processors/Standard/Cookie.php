@@ -32,7 +32,9 @@ class Cookie implements CentralApps\Authentication\Processors\SessionInterface {
 	
 	public function logout()
 	{
-		//unset()
+		foreach($this->cookieNames as $cookie_name) {
+			setcookie($cookie_name,"",time()-3600);
+		}
 	}
 	
 }
