@@ -10,7 +10,7 @@ class Cookie implements CentralApps\Authentication\Processors\SessionInterface {
 		$this->cookieNames = $cookie_names;
 	}
 	
-	public function checkForAuthenticationSession()
+	public function checkForAuthenticationCookie()
 	{
 		foreach($this->cookieNames as $cookie_name) {
 			if(!isset($_COOKIE[$cookie_name])) {
