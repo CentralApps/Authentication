@@ -3,9 +3,6 @@ namespace CentralApps\Authentication;
 
 class Processor {
 	
-	protected $dependencyInjectionContainer = null;
-	
-	//protected $
 	protected $usernameField = null;
 	protected $passwordField = null;
 	protected $rememberPasswordField = null;
@@ -18,19 +15,18 @@ class Processor {
 	protected $sessionProcessor = null;
 	protected $cookieProcessor = null;
 	
-	public function __construct($dependency_injection_container)
+	public function __construct($settings_provider)
 	{
-		$this->dependencyInjectionContainer = $dependency_injection_container;
-		$this->usernameField = $dependency_injection_container['username_field'];
-		$this->passwordField = $dependency_injection_container['password_field'];
-		$this->rememberPasswordField = $dependency_injection_container['remember_password_field'];
-		$this->rememberPasswordYesValue = $dependency_injection_container['remember_password_yes_value'];
-		$this->sessionName = $dependency_injection_container['session_name'];
-		$this->cookieNames = $dependency_injection_container['cookie_names'];
-		$this->userFactory = $dependency_injection_container['user_factory'];
-		$this->userGateway = $dependency_injection_container['user_gateway'];
-		$this->sessionProcessor = $dependency_injection_container['session_processor'];
-		$this->cookieProcessor = $dependency_injection_container['cookie_processor'];
+		$this->usernameField = $settings_provider->getUsernameField();
+		$this->passwordField = $settings_provider->getPasswordField();
+		$this->rememberPasswordField = $settings_provider->getRememberPasswordField();
+		$this->rememberPasswordYesValue = $settings_provider->getRememberPasswordYesValue();
+		$this->sessionName = $settings_provider->getSessionName();
+		$this->cookieNames = $settings_provider->getCookieNames();
+		$this->userFactory = $settings_provider->getUserFactory();
+		$this->userGateway = $settings_provider->getUserGateway();
+		$this->sessionProcessor = $settings_provider->getSessionProcessor();
+		$this->cookieProcessor = $settings_provider->getCookieProcessor();
 	}
 	
 	public function checkForAuthentication()
