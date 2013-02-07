@@ -15,8 +15,11 @@ class Processor {
 	protected $sessionProcessor = null;
 	protected $cookieProcessor = null;
 	
-	public function __construct(SettingsProviderInterface $settings_provider)
+	protected $postData;
+	
+	public function __construct(SettingsProviderInterface $settings_provider, $post_data=null)
 	{
+		$this->postData = (!is_null($post_data)) ? $post_data : $_POST;
 		$this->usernameField = $settings_provider->getUsernameField();
 		$this->passwordField = $settings_provider->getPasswordField();
 		$this->rememberPasswordField = $settings_provider->getRememberPasswordField();
@@ -31,9 +34,9 @@ class Processor {
 	
 	public function checkForAuthentication()
 	{
-		if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST[ $this->usernameField]) || isset($this->passwordField))) {
-			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $_POST[$this->passwordField]);
-			if(!is_null($this->userGateway->user) && isset($_POST[$this->rememberPasswordField]) && $_POST[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
+		if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
+			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $this->postData[$this->passwordField]);
+			if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
 				$this->rememberUser();
 			}
 		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
