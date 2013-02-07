@@ -16,6 +16,7 @@ class Processor {
 	protected $cookieProcessor = null;
 	
 	protected $postData;
+	protected $loginAttempted=false;
 	
 	public function __construct(SettingsProviderInterface $settings_provider, $post_data=null)
 	{
@@ -37,14 +38,22 @@ class Processor {
 	{
 		if($login_attempt && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
 			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $this->postData[$this->passwordField]);
+			$this->loginAttempted = true;
 			if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
 				$this->rememberUser();
 			}
 		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
+			$this->loginAttempted = true;
 			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor()->getCookieValues());
 		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
+			$this->loginAttempted;
 			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor()->getUserId());
 		}
+	}
+	
+	public function hasAttemptedToLogin()
+	{
+		return $this->loginAttempted;
 	}
 	
 	public function getUser()
