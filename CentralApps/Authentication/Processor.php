@@ -15,7 +15,7 @@ class Processor {
 	protected $sessionProcessor = null;
 	protected $cookieProcessor = null;
 	
-	public function __construct($settings_provider)
+	public function __construct(SettingsProviderInterface $settings_provider)
 	{
 		$this->usernameField = $settings_provider->getUsernameField();
 		$this->passwordField = $settings_provider->getPasswordField();
