@@ -32,9 +32,10 @@ class Processor {
 		$this->cookieProcessor = $settings_provider->getCookieProcessor();
 	}
 	
-	public function checkForAuthentication()
+	// use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
+	public function checkForAuthentication($login_attempt=true)
 	{
-		if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
+		if($login_attempt && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
 			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $this->postData[$this->passwordField]);
 			if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
 				$this->rememberUser();
