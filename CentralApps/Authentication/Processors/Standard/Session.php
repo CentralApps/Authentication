@@ -1,7 +1,7 @@
 <?php
 namespace CentralApps\Authentication\Processors\Standard;
 
-class Session implements CentralApps\Authentication\Processors\SessionInterface {
+class Session implements \CentralApps\Authentication\Processors\SessionInterface {
 	
 	protected $sessionName = null;
 	
