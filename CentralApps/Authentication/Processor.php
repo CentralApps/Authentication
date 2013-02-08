@@ -38,7 +38,7 @@ class Processor
     {
         // TODO: cookie and session checking and setting should be much more abstract than this
         // TODO: the processor should only know about providers, not care about session or cookie processors
-        if($login_attempt && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
+        if($login_attempt && (isset($this->postData[$this->usernameField]) || isset($this->postData[$this->passwordField]))) {
             $this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $this->postData[$this->passwordField]);
             $this->loginAttempted = true;
             if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
@@ -49,7 +49,7 @@ class Processor
             }
         } elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
             $this->loginAttempted = true;
-            $this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor->getCookieValues());
+            $this->userGateway->user = $this->authenticateFromCookieValues($this->cookieProcessor->getCookieValues());
         } elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
             $this->loginAttempted = true;
             $this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor->getUserId());
