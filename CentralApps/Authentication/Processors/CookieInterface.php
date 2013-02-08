@@ -7,5 +7,7 @@ interface CookieInterface
 	
 	public function getCookieValues();
 	
+	public function setCookieValues($cookie_values);
+	
 	public function logout();
 }

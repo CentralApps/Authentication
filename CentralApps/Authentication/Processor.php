@@ -36,6 +36,8 @@ class Processor {
 	// use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
 	public function checkForAuthentication($login_attempt=true)
 	{
+		// TODO: cookie and session checking and setting should be much more abstract than this
+		// TODO: the processor should only know about providers, not care about session or cookie processors
 		if($login_attempt && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
 			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($_POST[$this->usernameField], $this->postData[$this->passwordField]);
 			$this->loginAttempted = true;
@@ -45,9 +47,15 @@ class Processor {
 		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
 			$this->loginAttempted = true;
 			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor()->getCookieValues());
+			if(!is_null($this->userGateway->user)) {
+				$this->cookieProcessor->setCookieValues($this->userGateway->getCookieValues());
+			}
 		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
-			$this->loginAttempted;
+			$this->loginAttempted = true;
 			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor()->getUserId());
+			if(!is_null($this->userGateway->user)) {
+				$this->sessionProcessor->setSessionValue($this->userGateway->getUserId());
+			}
 		}
 	}
 	

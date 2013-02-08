@@ -15,6 +15,11 @@ class Session implements \CentralApps\Authentication\Processors\SessionInterface
 		return isset($_SESSION[$this->sessionName]);
 	}
 	
+	public function setSessionValue($session_value)
+	{
+		$_SESSION[$this->sessionName] = $session_value;
+	}
+	
 	public function getUserId()
 	{
 		return $_SESSION[$this->sessionName];
