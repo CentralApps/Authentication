@@ -1,7 +1,7 @@
 <?php
 namespace CentralApps\Authentication\Processors\Standard;
 
-class Cookie implements CentralApps\Authentication\Processors\CookieInterface 
+class Cookie implements \CentralApps\Authentication\Processors\CookieInterface 
 {
 	
 	protected $cookieNames = null;
