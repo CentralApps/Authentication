@@ -49,10 +49,10 @@ class Processor {
 			}
 		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
 			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor()->getCookieValues());
+			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor->getCookieValues());
 		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
 			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor()->getUserId());
+			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor->getUserId());
 		}
 	}
 	
