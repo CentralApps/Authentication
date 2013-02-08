@@ -44,18 +44,15 @@ class Processor {
 			if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
 				$this->rememberUser();
 			}
-		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
-			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor()->getCookieValues());
-			if(!is_null($this->userGateway->user)) {
-				$this->cookieProcessor->setCookieValues($this->userGateway->getCookieValues());
-			}
-		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
-			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor()->getUserId());
 			if(!is_null($this->userGateway->user)) {
 				$this->sessionProcessor->setSessionValue($this->userGateway->getUserId());
 			}
+		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
+			$this->loginAttempted = true;
+			$this->userGateway->user = $this->authenticateFromCookies($this->cookieProcessor()->getCookieValues());
+		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
+			$this->loginAttempted = true;
+			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor()->getUserId());
 		}
 	}
 	

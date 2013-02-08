@@ -31,6 +31,11 @@ class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
 		return $cookie_values;
 	}
 	
+	public function rememberUser($cookie_values)
+	{
+		$this->setCookieValues($cookieValues);
+	}
+	
 	public function setCookieValues($cookie_values)
 	{
 		foreach($cookie_values as $key => $value) {
