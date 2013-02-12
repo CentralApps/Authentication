@@ -38,14 +38,14 @@ class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
     public function setCookieValues($cookie_values)
     {
         foreach($cookie_values as $key => $value) {
-            $_COOKIE[$key] = $value;
+            setcookie($key, $value, time() + 3600);
         }
     }
 
     public function logout()
     {
         foreach($this->cookieNames as $cookie_name) {
-            setcookie($cookie_name,"",time()-3600);
+            setcookie($cookie_name, "", time() - 3600);
         }
     }
 }
