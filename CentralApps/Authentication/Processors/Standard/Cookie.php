@@ -32,7 +32,7 @@ class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
 
     public function rememberUser($cookie_values)
     {
-        $this->setCookieValues($cookieValues);
+        $this->setCookieValues($cookie_values);
     }
 
     public function setCookieValues($cookie_values)
