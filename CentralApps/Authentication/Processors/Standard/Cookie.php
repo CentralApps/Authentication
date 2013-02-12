@@ -25,7 +25,7 @@ class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
         $cookie_values = array();
         foreach($this->cookieNames as $cookie_name) {
             // could probably do this with an array_ function instead
-            $cookie_values[$cookie_name] = $_SESSION[$cookie_name];
+            $cookie_values[$cookie_name] = $_COOKIE[$cookie_name];
         }
         return $cookie_values;
     }
