@@ -87,6 +87,15 @@ class Processor
         }
         return $user;
     }
+    
+    public function manualLogin($username, $password)
+    {
+        $this->userGateway->user = $this->authenticateFromUsernameAndPassword($username, $password);
+        if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {
+            $this->sessionProcessor->setSessionValue($this->userGateway->getUserId());
+        }
+        return $this->userGateway->user;
+    }
 
     public function authenticateFromUserId($user_id)
     {
