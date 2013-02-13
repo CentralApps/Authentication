@@ -78,7 +78,7 @@ class Processor
         $this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
     }
 
-    private function authenticateFromUsernameAndPassword($username, $password)
+    public function authenticateFromUsernameAndPassword($username, $password)
     {
         try {
             $user = $this->userFactory->getUserFromUsernameAndPassword($username, $password);
@@ -88,7 +88,7 @@ class Processor
         return $user;
     }
 
-    private function authenticateFromUserId($user_id)
+    public function authenticateFromUserId($user_id)
     {
         try {
             $user = $this->userFactory->getUserByUserId($user_id);
