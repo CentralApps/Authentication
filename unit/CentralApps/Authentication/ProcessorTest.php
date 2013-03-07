@@ -19,7 +19,7 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($post_data, $value);
 	}
 	
-	public function testCheckForAuthentication()
+	public function _testCheckForAuthentication()
 	{
 		//$this->_processor->checkForAuthentication(true);
 		//$this->assertTrue(true);
@@ -119,12 +119,91 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		
 		$settings->expects($this->once())
 				 ->method('getUserGateway')
-				 ->will($this->returnValue($user_gateway));	 		
+				 ->will($this->returnValue($user_gateway));	 
+				 
+		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
+		$cookie_processor->expects($this->never())
+						 ->method('rememberUser');
+		$settings->expects($this->any())
+				 ->method('getCookieProcessor')
+				 ->will($this->returnValue($cookie_processor));		
 				 
 		$processor = new Processor($settings, $post_data);
 		$processor->checkForAuthentication();
 		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
 		$this->assertEquals($user, $processor->getUser());
+		
+	}
+
+	/**
+	 * @covers CentralApps\Authentication\Processor::checkForAuthentication
+	 * @covers CentralApps\Authentication\Processor::rememberUser
+	 */
+	public function testRememberingPassword()
+	{
+		$user_field = 'username';
+		$user_val = 'michael';
+		$pass_field = 'password';
+		$pass_val = 'test_password';
+		$remember_pass_field = 'remember_me';
+		$remember_pass_value = 1;
+		$post_data = array($user_field => $user_val, $pass_field => $pass_val, $remember_pass_field => $remember_pass_value);
+		$cookie_values = array('cookie' => 'values', 'are' => 'expected');
+		
+		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
+		$user_gateway->expects($this->once())
+					 ->method('getCookieValues')
+					 ->will($this->returnValue($cookie_values));
+		
+		
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserGateway')
+				 ->will($this->returnValue($user_gateway));
+				 
+		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');	
+		$user = new \stdClass;
+		$user->userId = 1;
+		$user_factory->expects($this->once())
+					 ->method('getUserFromUsernameAndPassword')
+					 ->with($this->equalTo($user_val), $this->equalTo($pass_val))
+					 ->will($this->returnValue($user));	 
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($user_factory));		 
+				 
+		$session = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
+		$settings->expects($this->any())
+				 ->method('getSessionProcessor')
+				 ->will($this->returnValue($session));
+		
+		$settings->expects($this->once())
+				 ->method('getUsernameField')
+				 ->will($this->returnValue($user_field));
+		$settings->expects($this->once())
+				 ->method('getPasswordField')
+				 ->will($this->returnValue($pass_field));
+		$settings->expects($this->once())
+				 ->method('getRememberPasswordField')
+				 ->will($this->returnValue($remember_pass_field));
+		$settings->expects($this->once())
+				 ->method('getRememberPasswordYesValue')
+				 ->will($this->returnValue($remember_pass_value));
+		
+		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
+		$cookie_processor->expects($this->once())
+						 ->method('rememberUser')
+						 ->with($this->equalTo($cookie_values));
+		$settings->expects($this->any())
+				 ->method('getCookieProcessor')
+				 ->will($this->returnValue($cookie_processor));
+				 		 		 
+		$processor = new Processor($settings, $post_data);
+		$processor->checkForAuthentication();
+	}
+
+	public function testLoginWithCookies()
+	{
 		
 	}
 	
