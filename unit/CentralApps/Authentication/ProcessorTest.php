@@ -74,6 +74,40 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->assertFalse($this->_processor->hasAttemptedToLogin());	
 	}
 	
+	/**
+	 * @covers CentralApps\Authentication\Processor::checkForAuthentication
+	 * @covers CentralApps\Authentication\Processor::authenticateFromCookieValues
+	 */
+	public function testCheckForAuthenticationWithCookies()
+	{
+		$cookie_values = array('some' => 'cookie', 'values' => 'here');
+		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
+		$cookie_processor->expects($this->once())
+						  ->method('checkForAuthenticationCookie')
+						  ->will($this->returnValue(true));
+		$cookie_processor->expects($this->once())
+						 ->method('getCookieValues')
+						 ->will($this->returnValue($cookie_values));
+		$factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
+		$user = new \stdClass();
+		$user->userId = 1;
+		$factory->expects($this->once())
+			    ->method('getByCookieValues')
+				->with($this->equalTo($cookie_values))
+				->will($this->returnValue($user));
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getCookieProcessor')
+				 ->will($this->returnValue($cookie_processor));
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($factory));
+		$processor = new \CentralApps\Authentication\Processor($settings, array());
+		$processor->checkForAuthentication();
+		$this->assertTrue($processor->hasAttemptedToLogin());
+		$this->assertEquals($user, $processor->getUser());
+	}
+	
 	public function testLoginWithUsernameAndPassword()
 	{
 		$user_field = 'username';
@@ -132,6 +166,78 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$processor->checkForAuthentication();
 		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
 		$this->assertEquals($user, $processor->getUser());
+	}
+
+	public function testAuthWithUserIdFailsGracefullyOnException()
+	{
+		$fake_user_id = 5;
+		// test throwing of the exception
+		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
+		$user_factory->expects($this->once())
+					 ->method('getUserByUserId')
+					 ->with($this->equalTo($fake_user_id))
+					 ->will($this->throwException(new \Exception()));
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($user_factory));	
+				 
+		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
+		$method = $reflection_class->getMethod("authenticateFromUserId");
+		$method->setAccessible(true);
+
+		$processor = new \CentralApps\Authentication\Processor($settings);
+
+		$this->assertNull($method->invoke($processor, $fake_user_id));
+		
+	}
+	
+	public function testAuthWithCookieValuesFailsGracefullyOnException()
+	{
+		$cookie_values = array('some' => 'cookie', 'values' => 'here');
+		// test throwing of the exception
+		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
+		$user_factory->expects($this->once())
+					 ->method('getByCookieValues')
+					 ->with($this->equalTo($cookie_values))
+					 ->will($this->throwException(new \Exception()));
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($user_factory));	
+				 
+		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
+		$method = $reflection_class->getMethod("authenticateFromCookieValues");
+		$method->setAccessible(true);
+
+		$processor = new \CentralApps\Authentication\Processor($settings);
+
+		$this->assertNull($method->invoke($processor, $cookie_values));
+		
+	}
+
+	public function testAuthWithUserAndPasswordFailsGracefullyOnException()
+	{
+		$fake_user = 'fake-user';
+		$fake_pass = 'fake-pass';
+		// test throwing of the exception
+		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
+		$user_factory->expects($this->once())
+					 ->method('getUserFromUsernameAndPassword')
+					 ->with($this->equalTo($fake_user), $this->equalTo($fake_pass))
+					 ->will($this->throwException(new \Exception()));
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($user_factory));	
+				 
+		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
+		$method = $reflection_class->getMethod("authenticateFromUsernameAndPassword");
+		$method->setAccessible(true);
+
+		$processor = new \CentralApps\Authentication\Processor($settings);
+
+		$this->assertNull($method->invoke($processor, $fake_user, $fake_pass));
 		
 	}
 
@@ -202,9 +308,25 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$processor->checkForAuthentication();
 	}
 
-	public function testLoginWithCookies()
+	public function testLogout()
 	{
+		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
+		$cookie_processor->expects($this->once())
+						 ->method('logout');
+		$session_processor = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
+		$session_processor->expects($this->once())
+						  ->method('logout');
 		
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getCookieProcessor')
+				 ->will($this->returnValue($cookie_processor));
+		$settings->expects($this->once())
+				 ->method('getSessionProcessor')
+				 ->will($this->returnValue($session_processor));
+		
+		$processor = new \CentralApps\Authentication\Processor($settings);
+		$processor->logout();
 	}
 	
 }
