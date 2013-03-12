@@ -1,7 +1,7 @@
 <?php
 namespace CentralApps\Authentication\Processors\Standard;
 
-class Cookie implements \CentralApps\Authentication\Processors\CookieInterface 
+class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
 {
 	
 	protected $cookieNames = null;
@@ -37,17 +37,17 @@ class Cookie implements \CentralApps\Authentication\Processors\CookieInterface
 	}
 	
 	public function setCookieValues($cookie_values)
-	{
-		foreach($cookie_values as $key => $value) {
-			$_COOKIE[$key] = $value;
-		}
-	}
-	
-	public function logout()
-	{
-		foreach($this->cookieNames as $cookie_name) {
-			setcookie($cookie_name,"",time()-3600);
-		}
-	}
+    {
+        foreach($cookie_values as $key => $value) {
+            setcookie($key, $value, time() + (86400 * 7), "/");
+        }
+    }
+
+    public function logout()
+    {
+        foreach($this->cookieNames as $cookie_name) {
+            setcookie($cookie_name, "", time() - 3600, "/");
+        }
+    }
 	
 }
