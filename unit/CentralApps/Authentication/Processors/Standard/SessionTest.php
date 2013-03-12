@@ -25,6 +25,9 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($session_name, $property->getValue($object), "Session name was not set by session processor constructor");
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testCheckForAuthenticationSession()
 	{
 		$this->assertFalse($this->object->checkForAuthenticationSession());
@@ -34,6 +37,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
 	
 	/**
 	 * @covers CentralApps\Authentication\Processors\Standard\Session::setSessionValue
+	 * @runInSeparateProcess
 	 */
 	public function testSetSessionValue()
 	{
@@ -44,6 +48,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
 	
 	/**
 	 * @covers CentralApps\Authentication\Processors\Standard\Session::getUserId
+	 * @runInSeparateProcess
 	 */
 	public function testGetUserId()
 	{
@@ -54,6 +59,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
 	
 	/**
 	 * @covers CentralApps\Authentication\Processors\Standard\Session::logout
+	 * @runInSeparateProcess
 	 */
 	public function testSessionLogout()
 	{

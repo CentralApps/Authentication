@@ -29,6 +29,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($cookie_names, $property->getValue($object), "Cookie names were not set by cookie processor constructor");
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testCheckForAuthenticationCookie()
 	{
 		$this->assertFalse($this->object->checkForAuthenticationCookie());
@@ -38,6 +41,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
 		$this->assertTrue($this->object->checkForAuthenticationCookie());
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testGetCookieValues()
 	{
 		$cookie_values = array();

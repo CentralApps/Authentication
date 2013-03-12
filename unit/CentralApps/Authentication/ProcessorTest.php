@@ -55,7 +55,10 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$settings_provider->expects($this->once())
 						  ->method('getUserFactory')
 						  ->will($this->returnValue($user_factory));
-		
+		$user_gateway = $this->getMock('UserGatewayInterface');
+		$settings_provider->expects($this->once())
+						  ->method('getUserGateway')
+						  ->will($this->returnValue($user_gateway));
 		$processor = new Processor($settings_provider);
 		$processor->checkForAuthentication(false);			 
 		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
@@ -99,6 +102,10 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$settings->expects($this->once())
 				 ->method('getCookieProcessor')
 				 ->will($this->returnValue($cookie_processor));
+		$user_gateway = $this->getMock('UserGatewayInterface');
+		$settings->expects($this->once())
+						  ->method('getUserGateway')
+						  ->will($this->returnValue($user_gateway));
 		$settings->expects($this->once())
 				 ->method('getUserFactory')
 				 ->will($this->returnValue($factory));
