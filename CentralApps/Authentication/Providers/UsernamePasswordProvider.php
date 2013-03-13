@@ -47,6 +47,6 @@ class SessionProvider implements ProcessorInterface
 	
 	public function userWantsToBeRemembered()
 	{
-		return (isset($this->post[$this->rememberField]) && $this->post[$this->rememberField] == $this->rememberFieldYesValue);
+		return (isset($this->post[$this->rememberField]) && ($this->post[$this->rememberField] == $this->rememberFieldYesValue));
 	}
 }
