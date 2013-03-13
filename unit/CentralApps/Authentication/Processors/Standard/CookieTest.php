@@ -19,6 +19,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
 		$_COOKIE = array();
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testConstructor()
 	{
 		$cookie_names = array('some', 'cookie', 'names');

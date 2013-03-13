@@ -15,6 +15,9 @@ class SessionTest extends \PHPUnit_Framework_TestCase
 		session_destroy();
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testConstructor()
 	{
 		$session_name = 'some session name';
