@@ -5,7 +5,7 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 {
 	public function setup()
 	{
-		$this->_processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), null. array());
+		$this->_processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), null, array());
 		$this->_container = new Providers\Container();
 	}
 	

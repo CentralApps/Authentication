@@ -64,11 +64,17 @@ class CookieProviderTest extends \PHPUnit_Framework_TestCase
 		$this->assertTrue($this->object->hasAttemptedToLoginWithProvider());
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testUserWantsToBeRemembered()
 	{
 		$this->assertFalse($this->object->userWantsToBeRemembered());
 	}
 	
+	/**
+	 * @runInSeparateProcess
+	 */
 	public function testProcessLoginAttempt()
 	{
 		$cookie_values = array();
