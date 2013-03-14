@@ -42,6 +42,8 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$user = new \stdClass;
 		$user->userId = 1;
 		
+		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
+		
 		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
 		$session_provider->expects($this->once())
 						 ->method('hasAttemptedToLoginWithProvider')
@@ -59,7 +61,10 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->_container->insert($session_provider_2, 0);
 		
 		$settings_provider = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
-		
+		$settings_provider->expects($this->once())
+				 ->method('getUserGateway')
+				 ->will($this->returnValue($user_gateway));
+				 
 		$processor = new Processor($settings_provider, $this->_container);
 		$processor->attemptToLogin();			 
 		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
