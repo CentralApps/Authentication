@@ -40,20 +40,23 @@ class Processor {
 	public function checkForAuthentication()
 	{
 		$this->attemptToLogin();
-		$this->persistLogin();
+		if(is_object($this->userGateway->user)) {
+		    $this->persistLogin();
+        }
 	}
 	
 	public function attemptToLogin()
 	{
 		$this->providers->rewind();
-		while($this->providers->valid()) {
-			$provider = $this->providers->current();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
 			if($provider->hasAttemptedToLoginWithProvider()) {
 				$this->loginAttempted = true;
 				$this->userGateway->user = $provider->processLoginAttempt();
 				break;
 			}
-			$this->providers->next();
+			$providers->next();
 		}
 	}
 
@@ -77,34 +80,39 @@ class Processor {
 	public function logout()
 	{
 		$this->providers->rewind();
-		while($this->providers->valid()) {
-			$provider = $this->providers->current();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
 			$provider->logout();
-			$this->providers->next();
+			$providers->next();
 		}
 	}
 	
 	public function persistLogin()
 	{
 		$this->providers->rewind();
-		while($this->providers->valid()) {
-			$provider = $this->providers->current();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+            $provider = $providers->current();
+			
 			if($provider instanceof Providers\PersistantProviderInterface) {
 				$provider->persistLogin();
 			}
-			$this->providers->next();
+			$providers->next();
 		}
+        exit;
 	}
 	
 	public function userWantsToBeRemembered()
 	{
 		$this->providers->rewind();
-		while($this->providers->valid()) {
-			$provider = $this->providers->current();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
 			if($provider->userWantsToBeRemembered()) {
 				return true;
 			}
-			$this->providers->next();
+			$providers->next();
 		}
 		return false;
 	}
@@ -112,12 +120,13 @@ class Processor {
 	public function rememberUser()
 	{
 		$this->providers->rewind();
-		while($this->providers->valid()) {
-			$provider = $this->providers->current();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
 			if($provider instanceof Providers\CookiePersistantProviderInterface) {
 				$provider->rememberUser();
 			}
-			$this->providers->next();
+			$providers->next();
 		}
 		//$this->sessionProcessor->rememberUser();
 		//$this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
