@@ -5,13 +5,14 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 {
 	public function setup()
 	{
-		$this->_processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), array());
+		$this->_processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), null. array());
+		$this->_container = new Providers\Container();
 	}
 	
 	public function testConstructor()
 	{
 		$post_data = array('some', 'data');
-		$processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $post_data);
+		$processor = new Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), null, $post_data);
 		$class = new \ReflectionClass("\CentralApps\Authentication\Processor");
         $property = $class->getProperty('postData');
         $property->setAccessible(true);
@@ -19,51 +20,50 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($post_data, $value);
 	}
 	
-	public function _testCheckForAuthentication()
+	public function testCheckForAuthentication()
 	{
-		//$this->_processor->checkForAuthentication(true);
-		//$this->assertTrue(true);
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('attemptToLogin', 'persistLogin'))
+					      ->getMock();
+		$processor->expects($this->once())
+				  ->method('attemptToLogin');
+		$processor->expects($this->once())
+				  ->method('persistLogin');
+		$processor->checkForAuthentication();
 	}
 	
 	/**
-	 * @covers \CentralApps\Authentication\Processor::checkForAuthentication
+	 * @covers \CentralApps\Authentication\Processor::attemptToLogin
 	 * @covers \CentralApps\Authentication\Processor::authenticateFromUserId
 	 */
-	public function testLoggingInWithSession()
+	public function testLoggingIn()
 	{
-		$session_processor = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
-		$session_processor->expects($this->once())
-						  ->method('checkForAuthenticationSession')
-						  ->will($this->returnValue(true));
-		$session_processor->expects($this->once())
-						  ->method('getUserId')
-						  ->will($this->returnValue(1));
-		$settings_provider = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
-		$settings_provider->expects($this->once())
-						  ->method('getSessionProcessor')
-						  ->will($this->returnValue($session_processor));
-						  
 		$user = new \stdClass;
 		$user->userId = 1;
 		
-		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
-		$user_factory->expects($this->once())
-					 ->method('getUserByUserId')
-					 ->with($this->equalTo(1))
-					 ->will($this->returnValue($user));
-					 
-		$settings_provider->expects($this->once())
-						  ->method('getUserFactory')
-						  ->will($this->returnValue($user_factory));
-		$user_gateway = $this->getMock('UserGatewayInterface');
-		$settings_provider->expects($this->once())
-						  ->method('getUserGateway')
-						  ->will($this->returnValue($user_gateway));
-		$processor = new Processor($settings_provider);
-		$processor->checkForAuthentication(false);			 
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider->expects($this->once())
+						 ->method('hasAttemptedToLoginWithProvider')
+						 ->will($this->returnValue(false));
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->once())
+						 ->method('hasAttemptedToLoginWithProvider')
+						 ->will($this->returnValue(true));
+		$session_provider_2->expects($this->once())
+						 ->method('processLoginAttempt')
+						 ->will($this->returnValue($user));				 
+						 
+		$this->_container->insert($session_provider, 10);
+		$this->_container->insert($session_provider_2, 0);
+		
+		$settings_provider = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		
+		$processor = new Processor($settings_provider, $this->_container);
+		$processor->attemptToLogin();			 
 		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
 		$this->assertEquals($user, $processor->getUser());		 
-		
 	}
 	
 	public function testHasAttemptedToLogin()
@@ -77,107 +77,29 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->assertFalse($this->_processor->hasAttemptedToLogin());	
 	}
 	
-	/**
-	 * @covers CentralApps\Authentication\Processor::checkForAuthentication
-	 * @covers CentralApps\Authentication\Processor::authenticateFromCookieValues
-	 */
-	public function testCheckForAuthenticationWithCookies()
+	public function testGetUser()
 	{
-		$cookie_values = array('some' => 'cookie', 'values' => 'here');
-		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
-		$cookie_processor->expects($this->once())
-						  ->method('checkForAuthenticationCookie')
-						  ->will($this->returnValue(true));
-		$cookie_processor->expects($this->once())
-						 ->method('getCookieValues')
-						 ->will($this->returnValue($cookie_values));
-		$factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
 		$user = new \stdClass();
-		$user->userId = 1;
-		$factory->expects($this->once())
-			    ->method('getByCookieValues')
-				->with($this->equalTo($cookie_values))
-				->will($this->returnValue($user));
+		$user->id = 8889;
+		
+		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
+		$user_gateway->user = $user;
+		
+		
 		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
 		$settings->expects($this->once())
-				 ->method('getCookieProcessor')
-				 ->will($this->returnValue($cookie_processor));
-		$user_gateway = $this->getMock('UserGatewayInterface');
-		$settings->expects($this->once())
-						  ->method('getUserGateway')
-						  ->will($this->returnValue($user_gateway));
-		$settings->expects($this->once())
-				 ->method('getUserFactory')
-				 ->will($this->returnValue($factory));
-		$processor = new \CentralApps\Authentication\Processor($settings, array());
-		$processor->checkForAuthentication();
-		$this->assertTrue($processor->hasAttemptedToLogin());
+				 ->method('getUserGateway')
+				 ->will($this->returnValue($user_gateway));
+		
+		$processor = new \CentralApps\Authentication\Processor($settings);
 		$this->assertEquals($user, $processor->getUser());
 	}
 	
-	public function testLoginWithUsernameAndPassword()
-	{
-		$user_field = 'username';
-		$user_val = 'michael';
-		$pass_field = 'password';
-		$pass_val = 'test_password';
-		$post_data = array($user_field => $user_val, $pass_field => $pass_val);
-		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
-		$settings->expects($this->once())
-				 ->method('getUsernameField')
-				 ->will($this->returnValue($user_field));
-		$settings->expects($this->once())
-				 ->method('getPasswordField')
-				 ->will($this->returnValue($pass_field));
-				 
-				 
-		$user = new \stdClass;
-		$user->userId = 1;
-		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');		 
-		$user_factory->expects($this->once())
-					 ->method('getUserFromUsernameAndPassword')
-					 ->with($this->equalTo($user_val), $this->equalTo($pass_val))
-					 ->will($this->returnValue($user));
-		
-		
-		$settings->expects($this->once())
-				 ->method('getUserFactory')
-				 ->will($this->returnValue($user_factory));
-		
-		$session = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
-		$session->expects($this->once())
-				->method('setSessionValue')
-				->with($this->equalTo(1));
-		
-		$settings->expects($this->once())
-				 ->method('getSessionProcessor')
-				 ->will($this->returnValue($session));
-				 
-		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
-		$user_gateway->expects($this->once())	
-					 ->method('getUserId')
-					 ->will($this->returnValue(1));
-		
-		$settings->expects($this->once())
-				 ->method('getUserGateway')
-				 ->will($this->returnValue($user_gateway));	 
-				 
-		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
-		$cookie_processor->expects($this->never())
-						 ->method('rememberUser');
-		$settings->expects($this->any())
-				 ->method('getCookieProcessor')
-				 ->will($this->returnValue($cookie_processor));		
-				 
-		$processor = new Processor($settings, $post_data);
-		$processor->checkForAuthentication();
-		$this->assertTrue($processor->hasAttemptedToLogin(), "It doesn't look like we tried to login the user");	
-		$this->assertEquals($user, $processor->getUser());
-	}
-
-	public function testAuthWithUserIdFailsGracefullyOnException()
+	public function testAuthenticateFromUserId()
 	{
 		$fake_user_id = 5;
+		$user = new \stdClass();
+		$user->id = 444;
 		// test throwing of the exception
 		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
 		$user_factory->expects($this->once())
@@ -188,45 +110,33 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$settings->expects($this->once())
 				 ->method('getUserFactory')
 				 ->will($this->returnValue($user_factory));	
-				 
-		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
-		$method = $reflection_class->getMethod("authenticateFromUserId");
-		$method->setAccessible(true);
 
 		$processor = new \CentralApps\Authentication\Processor($settings);
 
-		$this->assertNull($method->invoke($processor, $fake_user_id));
+		$this->assertNull($processor->authenticateFromUserId($fake_user_id));
 		
-	}
-	
-	public function testAuthWithCookieValuesFailsGracefullyOnException()
-	{
-		$cookie_values = array('some' => 'cookie', 'values' => 'here');
-		// test throwing of the exception
 		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
 		$user_factory->expects($this->once())
-					 ->method('getByCookieValues')
-					 ->with($this->equalTo($cookie_values))
-					 ->will($this->throwException(new \Exception()));
+					 ->method('getUserByUserId')
+					 ->with($this->equalTo($fake_user_id))
+					 ->will($this->returnValue($user));
 		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
 		$settings->expects($this->once())
 				 ->method('getUserFactory')
 				 ->will($this->returnValue($user_factory));	
-				 
-		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
-		$method = $reflection_class->getMethod("authenticateFromCookieValues");
-		$method->setAccessible(true);
 
 		$processor = new \CentralApps\Authentication\Processor($settings);
 
-		$this->assertNull($method->invoke($processor, $cookie_values));
+		$this->assertEquals($user, $processor->authenticateFromUserId($fake_user_id));
 		
 	}
 
-	public function testAuthWithUserAndPasswordFailsGracefullyOnException()
+	public function testAuthenticateFromUsernameAndPassword()
 	{
 		$fake_user = 'fake-user';
 		$fake_pass = 'fake-pass';
+		$user = new \stdClass();
+		$user->id = 12222;
 		// test throwing of the exception
 		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
 		$user_factory->expects($this->once())
@@ -237,103 +147,192 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$settings->expects($this->once())
 				 ->method('getUserFactory')
 				 ->will($this->returnValue($user_factory));	
-				 
-		$reflection_class = new \ReflectionClass("\CentralApps\Authentication\Processor");
-		$method = $reflection_class->getMethod("authenticateFromUsernameAndPassword");
-		$method->setAccessible(true);
-
 		$processor = new \CentralApps\Authentication\Processor($settings);
 
-		$this->assertNull($method->invoke($processor, $fake_user, $fake_pass));
+		$this->assertNull($processor->authenticateFromUsernameAndPassword($fake_user, $fake_pass));
+		
+		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');
+		$user_factory->expects($this->once())
+					 ->method('getUserFromUsernameAndPassword')
+					 ->with($this->equalTo($fake_user), $this->equalTo($fake_pass))
+					 ->will($this->returnValue($user));
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserFactory')
+				 ->will($this->returnValue($user_factory));	
+				 
+		$processor = new \CentralApps\Authentication\Processor($settings);
+
+		$this->assertEquals($user, $processor->authenticateFromUsernameAndPassword($fake_user, $fake_pass));
 		
 	}
 
-	/**
-	 * @covers CentralApps\Authentication\Processor::checkForAuthentication
-	 * @covers CentralApps\Authentication\Processor::rememberUser
-	 */
-	public function testRememberingPassword()
+	public function testUserWantsToBeRemembered()
 	{
-		$user_field = 'username';
-		$user_val = 'michael';
-		$pass_field = 'password';
-		$pass_val = 'test_password';
-		$remember_pass_field = 'remember_me';
-		$remember_pass_value = 1;
-		$post_data = array($user_field => $user_val, $pass_field => $pass_val, $remember_pass_field => $remember_pass_value);
-		$cookie_values = array('cookie' => 'values', 'are' => 'expected');
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider->expects($this->once())
+						 ->method('userWantsToBeRemembered')
+						 ->will($this->returnValue(false));
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->once())
+						 ->method('userWantsToBeRemembered')
+						 ->will($this->returnValue(true));
+						 				 
+		$this->_container->insert($session_provider,10);
+		$this->_container->insert($session_provider_2,0);
 		
-		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
-		$user_gateway->expects($this->once())
-					 ->method('getCookieValues')
-					 ->will($this->returnValue($cookie_values));
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$this->assertTrue($processor->userWantsToBeRemembered());
 		
 		
-		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
-		$settings->expects($this->once())
-				 ->method('getUserGateway')
-				 ->will($this->returnValue($user_gateway));
-				 
-		$user_factory = $this->getMock('\CentralApps\Authentication\UserFactoryInterface');	
-		$user = new \stdClass;
-		$user->userId = 1;
-		$user_factory->expects($this->once())
-					 ->method('getUserFromUsernameAndPassword')
-					 ->with($this->equalTo($user_val), $this->equalTo($pass_val))
-					 ->will($this->returnValue($user));	 
-		$settings->expects($this->once())
-				 ->method('getUserFactory')
-				 ->will($this->returnValue($user_factory));		 
-				 
-		$session = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
-		$settings->expects($this->any())
-				 ->method('getSessionProcessor')
-				 ->will($this->returnValue($session));
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider->expects($this->once())
+						 ->method('userWantsToBeRemembered')
+						 ->will($this->returnValue(false));
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->once())
+						 ->method('userWantsToBeRemembered')
+						 ->will($this->returnValue(false));
+						 
+		$this->_container = new Providers\Container();				 				 
+		$this->_container->insert($session_provider,10);
+		$this->_container->insert($session_provider_2,0);
 		
-		$settings->expects($this->once())
-				 ->method('getUsernameField')
-				 ->will($this->returnValue($user_field));
-		$settings->expects($this->once())
-				 ->method('getPasswordField')
-				 ->will($this->returnValue($pass_field));
-		$settings->expects($this->once())
-				 ->method('getRememberPasswordField')
-				 ->will($this->returnValue($remember_pass_field));
-		$settings->expects($this->once())
-				 ->method('getRememberPasswordYesValue')
-				 ->will($this->returnValue($remember_pass_value));
-		
-		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
-		$cookie_processor->expects($this->once())
-						 ->method('rememberUser')
-						 ->with($this->equalTo($cookie_values));
-		$settings->expects($this->any())
-				 ->method('getCookieProcessor')
-				 ->will($this->returnValue($cookie_processor));
-				 		 		 
-		$processor = new Processor($settings, $post_data);
-		$processor->checkForAuthentication();
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$this->assertFalse($processor->userWantsToBeRemembered());
 	}
 
 	public function testLogout()
 	{
-		$cookie_processor = $this->getMock('\CentralApps\Authentication\Processors\CookieInterface');
-		$cookie_processor->expects($this->once())
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider->expects($this->once())
 						 ->method('logout');
-		$session_processor = $this->getMock('\CentralApps\Authentication\Processors\SessionInterface');
-		$session_processor->expects($this->once())
-						  ->method('logout');
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->once())
+						 ->method('logout');
+						 				 
+		$this->_container->insert($session_provider,0);
+		$this->_container->insert($session_provider_2,0);
 		
-		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
-		$settings->expects($this->once())
-				 ->method('getCookieProcessor')
-				 ->will($this->returnValue($cookie_processor));
-		$settings->expects($this->once())
-				 ->method('getSessionProcessor')
-				 ->will($this->returnValue($session_processor));
-		
-		$processor = new \CentralApps\Authentication\Processor($settings);
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
 		$processor->logout();
 	}
+	
+	public function testPersistLogins()
+	{
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\PersistantProviderInterface');
+		$session_provider->expects($this->once())
+						 ->method('persistLogin');
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->never())
+						 ->method('persistLogin');
+						 				 
+		$this->_container->insert($session_provider,0);
+		$this->_container->insert($session_provider_2,0);
+		
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$processor->persistLogin();
+	}
+	
+	public function testRememberUser()
+	{
+		$session_provider = $this->getMock('\CentralApps\Authentication\Providers\PersistantProviderInterface');
+		$session_provider->expects($this->never())
+						 ->method('rememberUser');
+						 
+		$session_provider_2 = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$session_provider_2->expects($this->never())
+						 ->method('rememberUser');
+						 
+		$session_provider_3 = $this->getMock('\CentralApps\Authentication\Providers\CookiePersistantProviderInterface');
+		$session_provider_3->expects($this->once())
+						 ->method('rememberUser');
+						 				 
+		$this->_container->insert($session_provider,0);
+		$this->_container->insert($session_provider_2,0);
+		$this->_container->insert($session_provider_3,0);
+		
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$processor->rememberUser();
+	}
+	
+	public function testRememberPasswordIfRequested()
+	{
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('userWantsToBeRemembered', 'rememberUser'))
+					      ->getMock();
+		$processor->expects($this->once())
+				  ->method('userWantsToBeRemembered')
+				  ->will($this->returnValue(false));
+		$processor->expects($this->never())
+				  ->method('rememberUser');
+		$processor->rememberPasswordIfRequested();
+		
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('userWantsToBeRemembered', 'rememberUser'))
+					      ->getMock();
+		$processor->expects($this->once())
+				  ->method('userWantsToBeRemembered')
+				  ->will($this->returnValue(true));
+		$processor->expects($this->once())
+				  ->method('rememberUser');
+		$processor->rememberPasswordIfRequested();
+				  
+	}
+	
+	public function testManualLogin()
+	{
+		$username = 'test-user';
+		$password = 'test-pass';
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('authenticateFromUsernameAndPassword', 'persistLogin'))
+					      ->getMock();
+						  
+		
+		$processor->expects($this->once())
+				  ->method('authenticateFromUsernameAndPassword')
+				  ->with($this->equalTo($username), $this->equalTo($password))
+				  ->will($this->returnValue(null));
+		$processor->expects($this->never())
+				  ->method('persistLogin');
+		
+		$user_gateway = new \stdClass();
+		$user_gateway->user = null;
+		
+		$reflection = new \ReflectionClass('\CentralApps\Authentication\Processor');
+		$property = $reflection->getProperty("userGateway");
+		$property->setAccessible(true);
+		$property->setValue($processor, $user_gateway);
+		
+		$this->assertNull($processor->manualLogin($username, $password));
+						  
+		$user_gateway = new \stdClass();
+		$user_gateway->user = new \stdClass();
+		$user_gateway->user->id = 333;
+		
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('authenticateFromUsernameAndPassword', 'persistLogin'))
+					      ->getMock();
+		$property->setValue($processor, $user_gateway);
+		
+		$processor->expects($this->once())
+				  ->method('authenticateFromUsernameAndPassword')
+				  ->with($this->equalTo($username), $this->equalTo($password))
+				  ->will($this->returnValue($user_gateway->user));
+		$processor->expects($this->once())
+				  ->method('persistLogin');
+		
+		$this->assertEquals($user_gateway->user, $processor->manualLogin($username, $password));
+	}
+	
+	
 	
 }

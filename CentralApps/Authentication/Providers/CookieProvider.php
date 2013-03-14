@@ -10,13 +10,13 @@ class CookieProvider implements CookiePersistantProviderInterface
 	
 	protected $cookieNames = array('CA_AUTH_COOKIE_USER_ID', 'CA_AUTH_COOKIE_USER_HASH');
 	
-	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGatewayInterface $user_gateway)
+	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGateway $user_gateway)
 	{
 		$this->request = $request;
 		$this->userFactory = $user_factory;
 		$this->userGateway = $user_gateway;
-		if(isset($request->cookies) && is_array($request->cookies)) {
-			$this->cookies = $request->cookies;
+		if(isset($request['cookies']) && is_array($request['cookies'])) {
+			$this->cookies = $request['cookies'];
 		}
 	}
 	
@@ -37,10 +37,9 @@ class CookieProvider implements CookiePersistantProviderInterface
 	
 	public function processLoginAttempt()
 	{
-		$username = (isset($this->post[$this->usernameField])) ? $this->post[$this->usernameField] : '';
-		$password = (isset($this->post[$this->passwordField])) ? $this->post[$this->passwordField] : '';
+		$cookies = array_intersect_key($this->cookies, array_flip($this->cookieNames));
  		try {
-			 return $this->userFactory->getUserFromUsernameAndPassword($username, $password);
+			 return $this->userFactory->getByCookieValues($cookies);
 		} catch (\Exception $e) {
 			return null;
 		}
@@ -56,14 +55,19 @@ class CookieProvider implements CookiePersistantProviderInterface
 	
 	public function rememberUser($ttl=604800)
 	{
-		$cookie_values = $this->userGateway->getCookieValues();
+		$cookie_values = array_intersect_key($this->userGateway->getCookieValues(), array_flip($this->cookieNames));
 		foreach($cookie_values as $cookie_name => $cookie_value) {
-			setcookie($cookie_name, $cookie_value, time() + (86400 * 7), "/");
+			setcookie($cookie_name, $cookie_value, $ttl, "/");
 		}
  	}
 	
 	public function userWantsToBeRemembered()
 	{
 		return false;
+	}
+	
+	public function persistLogin()
+	{
+
 	}
 }

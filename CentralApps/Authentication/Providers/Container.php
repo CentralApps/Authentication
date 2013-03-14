@@ -1,8 +1,13 @@
 <?php
-namespace CentralApps\Authentication\Processors;
+namespace CentralApps\Authentication\Providers;
 
 class Container extends \SplPriorityQueue
 {
+	public function __construct()
+	{
+		$this->setExtractFlags(\SplPriorityQueue::EXTR_DATA);
+	}
+	
 	public function insert($value, $priority)
 	{
 		if(! $value instanceof ProviderInterface) {

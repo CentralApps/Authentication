@@ -9,7 +9,7 @@ class SessionProvider implements SessionPersistantProviderInterface
 	
 	protected $sessionName = 'CA_AUTH_USER_ID';
 	
-	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGatewayInterface $user_gateway)
+	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGateway $user_gateway)
 	{
 		$this->request = $request;
 		$this->userFactory = $user_factory;
@@ -29,7 +29,8 @@ class SessionProvider implements SessionPersistantProviderInterface
 	public function processLoginAttempt()
 	{
 		try {
-			 return $this->userFactory->getByUserId(intval($_SESSION[$this->sessionName]));
+			$user_id = (isset($_SESSION[$this->sessionName])) ? intval($_SESSION[$this->sessionName]) : 0;
+ 			 return $this->userFactory->getUserByUserId($user_id);
 		} catch (\Exception $e) {
 			return null;
 		}

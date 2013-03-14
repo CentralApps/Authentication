@@ -10,6 +10,8 @@ class Processor {
 	protected $sessionName = null;
 	protected $cookieNames = array();
 	
+	protected $providers;
+	
 	protected $userFactory = null;
 	protected $userGateway = null;
 	protected $sessionProcessor = null;
@@ -18,8 +20,9 @@ class Processor {
 	protected $postData;
 	protected $loginAttempted=false;
 	
-	public function __construct(SettingsProviderInterface $settings_provider, $post_data=null)
+	public function __construct(SettingsProviderInterface $settings_provider, $providers=null, $post_data=null)
 	{
+		$this->providers = $providers;
 		$this->postData = (!is_null($post_data)) ? $post_data : $_POST;
 		$this->usernameField = $settings_provider->getUsernameField();
 		$this->passwordField = $settings_provider->getPasswordField();
@@ -34,25 +37,30 @@ class Processor {
 	}
 	
 	// use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
-	public function checkForAuthentication($login_attempt=true)
+	public function checkForAuthentication()
 	{
-		// TODO: cookie and session checking and setting should be much more abstract than this
-		// TODO: the processor should only know about providers, not care about session or cookie processors
-		if($login_attempt && (isset($this->postData[ $this->usernameField]) || isset($this->postData[$this->passwordField]))) {
-			$this->userGateway->user = $this->authenticateFromUsernameAndPassword($this->postData[$this->usernameField], $this->postData[$this->passwordField]);
-			$this->loginAttempted = true;
-			if(!is_null($this->userGateway->user) && isset($this->postData[$this->rememberPasswordField]) && $this->postData[$this->rememberPasswordField] == $this->rememberPasswordYesValue) {
-				$this->rememberUser();
+		$this->attemptToLogin();
+		$this->persistLogin();
+	}
+	
+	public function attemptToLogin()
+	{
+		$this->providers->rewind();
+		while($this->providers->valid()) {
+			$provider = $this->providers->current();
+			if($provider->hasAttemptedToLoginWithProvider()) {
+				$this->loginAttempted = true;
+				$this->userGateway->user = $provider->processLoginAttempt();
+				break;
 			}
-			if(!is_null($this->userGateway->user)) {
-				$this->sessionProcessor->setSessionValue($this->userGateway->getUserId());
-			}
-		} elseif(is_object($this->cookieProcessor) && $this->cookieProcessor->checkForAuthenticationCookie()) {
-			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromCookieValues($this->cookieProcessor->getCookieValues());
-		} elseif(is_object($this->sessionProcessor) && $this->sessionProcessor->checkForAuthenticationSession()) {
-			$this->loginAttempted = true;
-			$this->userGateway->user = $this->authenticateFromUserId($this->sessionProcessor->getUserId());
+			$this->providers->next();
+		}
+	}
+
+	public function rememberPasswordIfRequested()
+	{
+		if($this->userWantsToBeRemembered()) {
+			$this->rememberUser();
 		}
 	}
 	
@@ -68,14 +76,51 @@ class Processor {
 	
 	public function logout()
 	{
-		$this->sessionProcessor->logout();
-		$this->cookieProcessor->logout();
+		$this->providers->rewind();
+		while($this->providers->valid()) {
+			$provider = $this->providers->current();
+			$provider->logout();
+			$this->providers->next();
+		}
+	}
+	
+	public function persistLogin()
+	{
+		$this->providers->rewind();
+		while($this->providers->valid()) {
+			$provider = $this->providers->current();
+			if($provider instanceof Providers\PersistantProviderInterface) {
+				$provider->persistLogin();
+			}
+			$this->providers->next();
+		}
+	}
+	
+	public function userWantsToBeRemembered()
+	{
+		$this->providers->rewind();
+		while($this->providers->valid()) {
+			$provider = $this->providers->current();
+			if($provider->userWantsToBeRemembered()) {
+				return true;
+			}
+			$this->providers->next();
+		}
+		return false;
 	}
 	
 	public function rememberUser()
 	{
+		$this->providers->rewind();
+		while($this->providers->valid()) {
+			$provider = $this->providers->current();
+			if($provider instanceof Providers\CookiePersistantProviderInterface) {
+				$provider->rememberUser();
+			}
+			$this->providers->next();
+		}
 		//$this->sessionProcessor->rememberUser();
-		$this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
+		//$this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
 	}
 	
 	public function authenticateFromUsernameAndPassword($username, $password)
@@ -92,7 +137,7 @@ class Processor {
     {
         $this->userGateway->user = $this->authenticateFromUsernameAndPassword($username, $password);
         if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {	
-            $this->sessionProcessor->setSessionValue($this->userGateway->getUserId());
+            $this->persistLogin();
         }
         return $this->userGateway->user;
     }
@@ -101,16 +146,6 @@ class Processor {
 	{
 		try {
 			$user = $this->userFactory->getUserByUserId($user_id);
-		} catch(\Exception $e) {
-			return null;
-		}
-		return $user;
-	}
-	
-	private function authenticateFromCookieValues($cookie_values)
-	{
-		try {
-			$user = $this->userFactory->getByCookieValues($cookie_values);
 		} catch(\Exception $e) {
 			return null;
 		}

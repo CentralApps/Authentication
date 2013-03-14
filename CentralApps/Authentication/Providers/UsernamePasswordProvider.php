@@ -1,7 +1,7 @@
 <?php
 namespace CentralApps\Authentication\Providers;
 
-class SessionProvider implements ProcessorInterface
+class UsernamePasswordProvider implements ProviderInterface
 {
 	protected $request;
 	protected $post = array();
@@ -14,13 +14,13 @@ class SessionProvider implements ProcessorInterface
 	protected $rememberField = 'remember';
 	protected $rememberFieldYesValue = '1';
 	
-	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGatewayInterface $user_gateway)
+	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGateway $user_gateway)
 	{
 		$this->request = $request;
 		$this->userFactory = $user_factory;
 		$this->userGateway = $user_gateway;
-		if(isset($request->post) && is_array($request->post)) {
-			$this->post = $request->post;
+		if(isset($request['post']) && is_array($request['post'])) {
+			$this->post = $request['post'];
 		}
 	}
 	
@@ -49,4 +49,30 @@ class SessionProvider implements ProcessorInterface
 	{
 		return (isset($this->post[$this->rememberField]) && ($this->post[$this->rememberField] == $this->rememberFieldYesValue));
 	}
+	
+	public function setUsernameField($username_field)
+	{
+		$this->usernameField = $username_field;
+	}
+	
+	public function setPasswordField($password_field)
+	{
+		$this->passwordField = $password_field;
+	}
+	
+	public function setSubmissionField($submission_field)
+	{
+		$this->submissionField = $submission_field;
+	}
+	
+	public function setRememberField($remember_field)
+	{
+		$this->rememberField = $remember_field;
+	}
+	
+	public function setRememberFieldYesValue($value)
+	{
+		$this->rememberFieldYesValue = $value;
+	}
+	
 }

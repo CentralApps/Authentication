@@ -4,15 +4,22 @@ namespace CentralApps\Authentication;
 class UserGateway
 {
 	public $user = null;
-
+	protected $userIdCookieName = 'CA_AUTH_COOKIE_USER_ID';
+	protected $userHashCookieName = 'CA_AUTH_COOKIE_USER_HASH';
+	
+	public function setUserIdCookieName($name)
+	{
+		$this->userIdCookieName = $name;
+	}
+	
+	public function setUserHashCookieName($name)
+	{
+		$this->userHashCookieName = $name;
+	}
+	
 	public function getUserId()
 	{
 		return $this->user->getId();
-	}
-
-	public function updateLastLoginTime($time)
-	{
-		// do nothing
 	}
 
 	public function getPasswordHash()
@@ -22,6 +29,6 @@ class UserGateway
 
 	public function getCookieValues()
 	{
-		return array('user_id' => $this->getUserId(), 'user_hash' => sha1(sha1(md5($this->getPasswordHash()))));
+		return array($this->userIdCookieName => $this->getUserId(), $this->userHashCookieName => sha1(sha1(md5($this->getPasswordHash()))));
 	}
 }
