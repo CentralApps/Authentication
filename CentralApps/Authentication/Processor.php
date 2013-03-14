@@ -1,53 +1,163 @@
 <?php
-namespace CentralApps\Authentication\Providers;
+namespace CentralApps\Authentication;
 
-class SessionProvider implements SessionPersistantProviderInterface
-{
-	protected $request;
-	protected $userFactory;
-	protected $userGateway;
+class Processor {
 	
-	protected $sessionName = 'CA_AUTH_USER_ID';
+	protected $usernameField = null;
+	protected $passwordField = null;
+	protected $rememberPasswordField = null;
+	protected $rememberPasswordYesValue;
+	protected $sessionName = null;
+	protected $cookieNames = array();
 	
-	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGateway $user_gateway)
+	protected $providers;
+	
+	protected $userFactory = null;
+	protected $userGateway = null;
+	protected $sessionProcessor = null;
+	protected $cookieProcessor = null;
+	
+	protected $postData;
+	protected $loginAttempted=false;
+	
+	public function __construct(SettingsProviderInterface $settings_provider, $providers=null, $post_data=null)
 	{
-		$this->request = $request;
-		$this->userFactory = $user_factory;
-		$this->userGateway = $user_gateway;
+		$this->providers = $providers;
+		$this->postData = (!is_null($post_data)) ? $post_data : $_POST;
+		$this->usernameField = $settings_provider->getUsernameField();
+		$this->passwordField = $settings_provider->getPasswordField();
+		$this->rememberPasswordField = $settings_provider->getRememberPasswordField();
+		$this->rememberPasswordYesValue = $settings_provider->getRememberPasswordYesValue();
+		$this->sessionName = $settings_provider->getSessionName();
+		$this->cookieNames = $settings_provider->getCookieNames();
+		$this->userFactory = $settings_provider->getUserFactory();
+		$this->userGateway = $settings_provider->getUserGateway();
+		$this->sessionProcessor = $settings_provider->getSessionProcessor();
+		$this->cookieProcessor = $settings_provider->getCookieProcessor();
 	}
 	
-	public function setSessionName($session_name)
+	// use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
+	public function checkForAuthentication()
 	{
-		$this->sessionName = $session_name;
+		$this->attemptToLogin();
+		if(is_object($this->userGateway->user)) {
+		    $this->persistLogin();
+        }
 	}
 	
-	public function hasAttemptedToLoginWithProvider()
+	public function attemptToLogin()
 	{
-		return (isset($_SESSION[$this->sessionName]));
+		$this->providers->rewind();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
+			if($provider->hasAttemptedToLoginWithProvider()) {
+				$this->loginAttempted = true;
+				$this->userGateway->user = $provider->processLoginAttempt();
+				break;
+			}
+			$providers->next();
+		}
+	}
+
+	public function rememberPasswordIfRequested()
+	{
+		if($this->userWantsToBeRemembered()) {
+			$this->rememberUser();
+		}
 	}
 	
-	public function processLoginAttempt()
+	public function hasAttemptedToLogin()
 	{
-		try {
-			$user_id = (isset($_SESSION[$this->sessionName])) ? intval($_SESSION[$this->sessionName]) : 0;
- 			 return $this->userFactory->getUserByUserId($user_id);
-		} catch (\Exception $e) {
-			return null;
+		return $this->loginAttempted;
+	}
+	
+	public function getUser()
+	{
+		return $this->userGateway->user;
+	}
+	
+	public function logout()
+	{
+		$this->providers->rewind();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
+			$provider->logout();
+			$providers->next();
 		}
 	}
 	
 	public function persistLogin()
 	{
-		$_SESSION[$this->sessionName] = $this->userGateway->getUserId();
- 	}
-	
-	public function logout()
-	{
-		unset($_SESSION[$this->sessionName]);
+		$this->providers->rewind();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+            $provider = $providers->current();
+			
+			if($provider instanceof Providers\PersistantProviderInterface) {
+				$provider->persistLogin();
+			}
+			$providers->next();
+		}
 	}
 	
 	public function userWantsToBeRemembered()
 	{
+		$this->providers->rewind();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
+			if($provider->userWantsToBeRemembered()) {
+				return true;
+			}
+			$providers->next();
+		}
 		return false;
 	}
+	
+	public function rememberUser()
+	{
+		$this->providers->rewind();
+        $providers = clone $this->providers;
+		while($providers->valid()) {
+			$provider = $providers->current();
+			if($provider instanceof Providers\CookiePersistantProviderInterface) {
+				$provider->rememberUser();
+			}
+			$providers->next();
+		}
+		//$this->sessionProcessor->rememberUser();
+		//$this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
+	}
+	
+	public function authenticateFromUsernameAndPassword($username, $password)
+	{
+		try {
+			$user = $this->userFactory->getUserFromUsernameAndPassword($username, $password);
+		} catch(\Exception $e) {
+			return null;
+		}
+		return $user;
+	}
+	
+	public function manualLogin($username, $password)
+    {
+        $this->userGateway->user = $this->authenticateFromUsernameAndPassword($username, $password);
+        if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {	
+            $this->persistLogin();
+        }
+        return $this->userGateway->user;
+    }
+	
+	public function authenticateFromUserId($user_id)
+	{
+		try {
+			$user = $this->userFactory->getUserByUserId($user_id);
+		} catch(\Exception $e) {
+			return null;
+		}
+		return $user;
+	}
+	
 }
