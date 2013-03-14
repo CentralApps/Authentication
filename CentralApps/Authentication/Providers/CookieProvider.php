@@ -57,7 +57,7 @@ class CookieProvider implements CookiePersistantProviderInterface
 	{
 		$cookie_values = array_intersect_key($this->userGateway->getCookieValues(), array_flip($this->cookieNames));
 		foreach($cookie_values as $cookie_name => $cookie_value) {
-			setcookie($cookie_name, $cookie_value, $ttl, "/");
+			setcookie($cookie_name, $cookie_value, time()+$ttl, "/");
 		}
  	}
 	
