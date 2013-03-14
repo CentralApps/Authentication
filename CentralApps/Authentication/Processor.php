@@ -40,7 +40,7 @@ class Processor {
 	public function checkForAuthentication()
 	{
 		$this->attemptToLogin();
-		if(is_object($this->userGateway->user)) {
+		if(is_object($this->userGateway) && is_object($this->userGateway->user)) {
 		    $this->persistLogin();
         }
 	}
