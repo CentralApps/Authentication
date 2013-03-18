@@ -20,12 +20,35 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($post_data, $value);
 	}
 	
+	/**
+	 * @covers CentralApps\Authentication\Processor::checkForAuthentication
+	 */
 	public function testCheckForAuthentication()
 	{
 		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
 					      ->disableOriginalConstructor()
 						  ->setMethods(array('attemptToLogin', 'persistLogin'))
 					      ->getMock();
+		$processor->expects($this->once())
+				  ->method('attemptToLogin');
+		$processor->expects($this->never())
+				  ->method('persistLogin');
+		$processor->checkForAuthentication();
+		
+		$user_gateway = $this->getMock('\CentralApps\Authentication\UserGateway');
+		$user_gateway->user = new \stdClass();
+		
+		$settings = $this->getMock('\CentralApps\Authentication\SettingsProviderInterface');
+		$settings->expects($this->once())
+				 ->method('getUserGateway')
+				 ->will($this->returnValue($user_gateway));
+		
+		
+		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
+					      ->disableOriginalConstructor()
+						  ->setMethods(array('attemptToLogin', 'persistLogin'))
+					      ->getMock();
+		$processor->__construct($settings);
 		$processor->expects($this->once())
 				  ->method('attemptToLogin');
 		$processor->expects($this->once())
