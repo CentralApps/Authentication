@@ -74,6 +74,7 @@ class Processor {
 				if(!$provider->shouldPersist()) {
 					return false;
 				}
+				$providers->next();
 			}
 		}
 		return true;
