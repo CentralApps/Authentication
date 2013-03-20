@@ -121,4 +121,9 @@ class SessionProviderTest extends \PHPUnit_Framework_TestCase
 	{
 		$this->assertFalse($this->_provider->userWantsToBeRemembered());
 	}
+	
+	public function testShouldPersist()
+	 {
+	 	$this->assertTrue($this->_provider->shouldPersist());
+	 }
 }

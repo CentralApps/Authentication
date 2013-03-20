@@ -27,7 +27,7 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 	{
 		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
 					      ->disableOriginalConstructor()
-						  ->setMethods(array('attemptToLogin', 'persistLogin'))
+						  ->setMethods(array('attemptToLogin', 'persistLogin', 'shouldPersist'))
 					      ->getMock();
 		$processor->expects($this->once())
 				  ->method('attemptToLogin');
@@ -46,13 +46,16 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 		
 		$processor = $this->getMockBuilder('\CentralApps\Authentication\Processor')
 					      ->disableOriginalConstructor()
-						  ->setMethods(array('attemptToLogin', 'persistLogin'))
+						  ->setMethods(array('attemptToLogin', 'persistLogin', 'shouldPersist'))
 					      ->getMock();
 		$processor->__construct($settings);
 		$processor->expects($this->once())
 				  ->method('attemptToLogin');
 		$processor->expects($this->once())
 				  ->method('persistLogin');
+		$processor->expects($this->once())
+				  ->method('shouldPersist')
+				  ->will($this->returnValue(true));
 		$processor->checkForAuthentication();
 	}
 	
@@ -359,6 +362,23 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
 				  ->method('persistLogin');
 		
 		$this->assertEquals($user_gateway->user, $processor->manualLogin($username, $password));
+	}
+
+	/**
+	 * @covers CentralApps\Authentication\Processor::shouldPersist
+	 */
+	public function testShouldPersist()
+	{
+		$processor = new \CentralApps\Authentication\Processor($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$this->assertTrue($processor->shouldPersist());
+		
+		$provider = $this->getMock('\CentralApps\Authentication\Providers\ProviderInterface');
+		$provider->expects($this->once())
+				 ->method('shouldPersist')
+				 ->will($this->returnValue(false));
+		$this->_container->insert($provider,0);
+		$processor->__construct($this->getMock('\CentralApps\Authentication\SettingsProviderInterface'), $this->_container);
+		$this->assertFalse($processor->shouldPersist());
 	}
 	
 	

@@ -119,6 +119,11 @@ class CookieProviderTest extends \PHPUnit_Framework_TestCase
 	 	$object = new CookieProvider(array(), $this->_userFactory, $this->_userGateway);
 		$object->logout();
 	 }
+	 
+	 public function testShouldPersist()
+	 {
+	 	$this->assertTrue($this->object->shouldPersist());
+	 }
 	
 
 	

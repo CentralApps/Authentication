@@ -152,4 +152,9 @@ class UsernamePasswordProviderTest extends \PHPUnit_Framework_TestCase
 		$request_property->setAccessible(true);
 		$this->assertEquals($value, $request_property->getValue($this->_provider));
 	}
+	
+	public function testShouldPersist()
+	 {
+	 	$this->assertTrue($this->_provider->shouldPersist());
+	 }
 }
