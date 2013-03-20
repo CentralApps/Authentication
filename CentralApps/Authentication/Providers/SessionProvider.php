@@ -50,4 +50,9 @@ class SessionProvider implements SessionPersistantProviderInterface
 	{
 		return false;
 	}
+	
+	public function shouldPersist()
+	{
+		return true;
+	}
 }

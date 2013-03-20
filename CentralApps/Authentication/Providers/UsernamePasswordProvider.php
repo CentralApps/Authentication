@@ -75,4 +75,9 @@ class UsernamePasswordProvider implements ProviderInterface
 		$this->rememberFieldYesValue = $value;
 	}
 	
+	public function shouldPersist()
+	{
+		return true;
+	}
+	
 }

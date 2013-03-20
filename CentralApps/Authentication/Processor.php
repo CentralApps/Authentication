@@ -40,7 +40,7 @@ class Processor {
 	public function checkForAuthentication()
 	{
 		$this->attemptToLogin();
-		if(is_object($this->userGateway) && is_object($this->userGateway->user)) {
+		if(is_object($this->userGateway) && is_object($this->userGateway->user) && $this->shouldPersist()) {
 		    $this->persistLogin();
         }
 	}
@@ -54,10 +54,29 @@ class Processor {
 			if($provider->hasAttemptedToLoginWithProvider()) {
 				$this->loginAttempted = true;
 				$this->userGateway->user = $provider->processLoginAttempt();
-				break;
+				if(!is_null($this->userGateway->user)) {
+					// let's only break if the attempt was successful, this way
+					// if someone has the wrong cookies but tries to use login form
+					// it won't fail at the first hurdle
+					break; 
+				}
 			}
 			$providers->next();
 		}
+	}
+	
+	public function shouldPersist()
+	{
+		if(! is_null($this->providers)) {
+			$providers = clone $this->providers;
+			while($providers->valid()) {
+				$provider = $providers->current();
+				if(!$provider->shouldPersist()) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	public function rememberPasswordIfRequested()

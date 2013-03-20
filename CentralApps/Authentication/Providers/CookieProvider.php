@@ -70,4 +70,9 @@ class CookieProvider implements CookiePersistantProviderInterface
 	{
 
 	}
+	
+	public function shouldPersist()
+	{
+		return true;
+	}
 }

@@ -8,4 +8,5 @@ interface ProviderInterface
 	public function processLoginAttempt();
 	public function logout();
 	public function userWantsToBeRemembered();
+	public function shouldPersist();
 }
