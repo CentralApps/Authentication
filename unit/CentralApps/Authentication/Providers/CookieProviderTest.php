@@ -27,10 +27,13 @@ class CookieProviderTest extends \PHPUnit_Framework_TestCase
 	
 	public function tearDown()
 	{
-		foreach($this->cookieNames as $cookie_name) {
-            setcookie($cookie_name,"",time()-3600, "/");
-        }
+		if(!headers_sent()) {
+			foreach($this->cookieNames as $cookie_name) {
+	            setcookie($cookie_name,"",time()-3600, "/");
+	        }
+		}
 		$_COOKIE = array();
+		
 	}
 	
 	/**
