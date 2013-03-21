@@ -180,5 +180,10 @@ class Processor {
 		return $user;
 	}
 	
+	public function getProviders()
+	{
+		return $this->providers;
+	}
+	
 }
 
