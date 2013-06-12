@@ -41,6 +41,7 @@ class CookieProvider implements CookiePersistantProviderInterface
  		try {
 			 return $this->userFactory->getByCookieValues($cookies);
 		} catch (\Exception $e) {
+			$this->logout();
 			return null;
 		}
 	}
