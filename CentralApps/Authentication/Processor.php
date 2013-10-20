@@ -2,24 +2,24 @@
 namespace CentralApps\Authentication;
 
 class Processor {
-	
+
 	protected $usernameField = null;
 	protected $passwordField = null;
 	protected $rememberPasswordField = null;
 	protected $rememberPasswordYesValue;
 	protected $sessionName = null;
 	protected $cookieNames = array();
-	
+
 	protected $providers;
-	
+
 	protected $userFactory = null;
 	protected $userGateway = null;
 	protected $sessionProcessor = null;
 	protected $cookieProcessor = null;
-	
+
 	protected $postData;
 	protected $loginAttempted=false;
-	
+
 	public function __construct(SettingsProviderInterface $settings_provider, $providers=null, $post_data=null)
 	{
 		$this->providers = $providers;
@@ -35,7 +35,7 @@ class Processor {
 		$this->sessionProcessor = $settings_provider->getSessionProcessor();
 		$this->cookieProcessor = $settings_provider->getCookieProcessor();
 	}
-	
+
 	// use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
 	public function checkForAuthentication()
 	{
@@ -44,7 +44,7 @@ class Processor {
 		    $this->persistLogin();
         }
 	}
-	
+
 	public function attemptToLogin()
 	{
 		$this->providers->rewind();
@@ -58,13 +58,13 @@ class Processor {
 					// let's only break if the attempt was successful, this way
 					// if someone has the wrong cookies but tries to use login form
 					// it won't fail at the first hurdle
-					break; 
+					break;
 				}
 			}
 			$providers->next();
 		}
 	}
-	
+
 	public function shouldPersist()
 	{
 		if(! is_null($this->providers)) {
@@ -86,17 +86,17 @@ class Processor {
 			$this->rememberUser();
 		}
 	}
-	
+
 	public function hasAttemptedToLogin()
 	{
 		return $this->loginAttempted;
 	}
-	
+
 	public function getUser()
 	{
 		return $this->userGateway->user;
 	}
-	
+
 	public function logout()
 	{
 		$this->providers->rewind();
@@ -107,21 +107,21 @@ class Processor {
 			$providers->next();
 		}
 	}
-	
+
 	public function persistLogin()
 	{
 		$this->providers->rewind();
         $providers = clone $this->providers;
 		while($providers->valid()) {
             $provider = $providers->current();
-			
+
 			if($provider instanceof Providers\PersistantProviderInterface) {
 				$provider->persistLogin();
 			}
 			$providers->next();
 		}
 	}
-	
+
 	public function userWantsToBeRemembered()
 	{
 		$this->providers->rewind();
@@ -135,7 +135,7 @@ class Processor {
 		}
 		return false;
 	}
-	
+
 	public function rememberUser()
 	{
 		$this->providers->rewind();
@@ -150,7 +150,7 @@ class Processor {
 		//$this->sessionProcessor->rememberUser();
 		//$this->cookieProcessor->rememberUser($this->userGateway->getCookieValues());
 	}
-	
+
 	public function authenticateFromUsernameAndPassword($username, $password)
 	{
 		try {
@@ -160,16 +160,16 @@ class Processor {
 		}
 		return $user;
 	}
-	
+
 	public function manualLogin($username, $password)
     {
         $this->userGateway->user = $this->authenticateFromUsernameAndPassword($username, $password);
-        if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {	
+        if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {
             $this->persistLogin();
         }
         return $this->userGateway->user;
     }
-	
+
 	public function authenticateFromUserId($user_id)
 	{
 		try {
@@ -179,11 +179,11 @@ class Processor {
 		}
 		return $user;
 	}
-	
+
 	public function getProviders()
 	{
 		return $this->providers;
 	}
-	
+
 }
 

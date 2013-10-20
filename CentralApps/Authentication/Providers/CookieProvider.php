@@ -7,9 +7,9 @@ class CookieProvider implements CookiePersistantProviderInterface
 	protected $cookies = array();
 	protected $userFactory;
 	protected $userGateway;
-	
+
 	protected $cookieNames = array('CA_AUTH_COOKIE_USER_ID', 'CA_AUTH_COOKIE_USER_HASH');
-	
+
 	public function __construct(array $request, \CentralApps\Authentication\UserFactoryInterface $user_factory, \CentralApps\Authentication\UserGateway $user_gateway)
 	{
 		$this->request = $request;
@@ -19,12 +19,12 @@ class CookieProvider implements CookiePersistantProviderInterface
 			$this->cookies = $request['cookies'];
 		}
 	}
-	
+
 	public function setCookieNames($cookie_names)
 	{
 		$this->cookieNames = $cookie_names;
 	}
-	
+
 	public function hasAttemptedToLoginWithProvider()
 	{
 		foreach($this->cookieNames as $cookie_name) {
@@ -34,7 +34,7 @@ class CookieProvider implements CookiePersistantProviderInterface
 		}
 		return true;
 	}
-	
+
 	public function processLoginAttempt()
 	{
 		$cookies = array_intersect_key($this->cookies, array_flip($this->cookieNames));
@@ -45,7 +45,7 @@ class CookieProvider implements CookiePersistantProviderInterface
 			return null;
 		}
 	}
-	
+
 	public function logout()
 	{
 		foreach($this->cookieNames as $cookie_name) {
@@ -53,7 +53,7 @@ class CookieProvider implements CookiePersistantProviderInterface
 		}
 		return true;
 	}
-	
+
 	public function rememberUser($ttl=604800)
 	{
 		$cookie_values = array_intersect_key($this->userGateway->getCookieValues(), array_flip($this->cookieNames));
@@ -61,17 +61,17 @@ class CookieProvider implements CookiePersistantProviderInterface
 			setcookie($cookie_name, $cookie_value, time()+$ttl, "/");
 		}
  	}
-	
+
 	public function userWantsToBeRemembered()
 	{
 		return false;
 	}
-	
+
 	public function persistLogin()
 	{
 
 	}
-	
+
 	public function shouldPersist()
 	{
 		return true;

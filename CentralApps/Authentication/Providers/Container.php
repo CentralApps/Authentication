@@ -7,7 +7,7 @@ class Container extends \SplPriorityQueue
 	{
 		$this->setExtractFlags(\SplPriorityQueue::EXTR_DATA);
 	}
-	
+
 	public function insert($value, $priority)
 	{
 		if(! $value instanceof ProviderInterface) {
