@@ -77,6 +77,7 @@ class Processor {
 				$providers->next();
 			}
 		}
+
 		return true;
 	}
 
@@ -133,6 +134,7 @@ class Processor {
 			}
 			$providers->next();
 		}
+
 		return false;
 	}
 
@@ -145,6 +147,7 @@ class Processor {
 			if($provider instanceof Providers\CookiePersistantProviderInterface) {
 				$provider->rememberUser();
 			}
+
 			$providers->next();
 		}
 		//$this->sessionProcessor->rememberUser();
@@ -158,6 +161,7 @@ class Processor {
 		} catch(\Exception $e) {
 			return null;
 		}
+
 		return $user;
 	}
 
@@ -167,7 +171,18 @@ class Processor {
         if(!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {
             $this->persistLogin();
         }
+
         return $this->userGateway->user;
+    }
+
+    public function manualLoginFromId($id)
+    {
+    	$this->userGateway->user = $this->authenticateFromUserId($id);
+    	if (!is_null($this->userGateway->user) && (!empty($this->userGateway->user))) {
+    		$this->persistLogin();
+    	}
+
+    	return $this->userGateway->user;
     }
 
 	public function authenticateFromUserId($user_id)
@@ -177,6 +192,7 @@ class Processor {
 		} catch(\Exception $e) {
 			return null;
 		}
+
 		return $user;
 	}
 
@@ -184,6 +200,4 @@ class Processor {
 	{
 		return $this->providers;
 	}
-
 }
-
