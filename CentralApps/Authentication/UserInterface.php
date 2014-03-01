@@ -3,6 +3,6 @@ namespace CentralApps\Authentication;
 
 interface UserInterface
 {
-	public function getId();
-	public function getPassword();
+    public function getId();
+    public function getPassword();
 }

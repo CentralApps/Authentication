@@ -3,5 +3,5 @@ namespace CentralApps\Authentication\Providers;
 
 interface PersistantProviderInterface extends ProviderInterface
 {
-	public function persistLogin();
+    public function persistLogin();
 }
