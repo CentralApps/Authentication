@@ -32,8 +32,6 @@ class Processor
         $this->cookieNames = $settings_provider->getCookieNames();
         $this->userFactory = $settings_provider->getUserFactory();
         $this->userGateway = $settings_provider->getUserGateway();
-        $this->sessionProcessor = $settings_provider->getSessionProcessor();
-        $this->cookieProcessor = $settings_provider->getCookieProcessor();
     }
 
     // use something such as $_SERVER['REQUEST_METHOD'] == 'POST' for the $login_attempt variable
