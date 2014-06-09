@@ -11,6 +11,4 @@ interface SettingsProviderInterface
     public function getCookieNames();
     public function getUserFactory();
     public function getUserGateway();
-    public function getSessionProcessor();
-    public function getCookieProcessor();
 }
