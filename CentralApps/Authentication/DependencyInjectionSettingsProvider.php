@@ -49,14 +49,4 @@ class DependencyInjectionSettingsProvider implements SettingsProviderInterface
     {
         return $this->dependency_injection_container['user_gateway'];
     }
-
-    public function getSessionProcessor()
-    {
-        return $this->dependency_injection_container['session_processor'];
-    }
-
-    public function getCookieProcessor()
-    {
-        return $this->dependency_injection_container['cookie_processor'];
-    }
 }
