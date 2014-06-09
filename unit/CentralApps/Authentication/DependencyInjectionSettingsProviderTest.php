@@ -14,9 +14,7 @@ class DependencyInjectionSettingsProviderTest extends \PHPUnit_Framework_TestCas
                           'session_name' => 'Value of the session name property',
                           'cookie_names' => array('Value', 'of', 'the', 'cookie', 'names', 'property'),
                           'user_factory' => $this->getMock('UserFactoryInterface'),
-                          'user_gateway' => $this->getMock('UserGateway'),
-                          'session_processor' => $this->getMock('Processors\SessionInterface'),
-                          'cookie_processor' => $this->getMock('Processors\CookieInterface'));
+                          'user_gateway' => $this->getMock('UserGateway'));
         $this->provider = new DependencyInjectionSettingsProvider($settings);
     }
 
@@ -71,15 +69,5 @@ class DependencyInjectionSettingsProviderTest extends \PHPUnit_Framework_TestCas
     public function testGetUserGateway()
     {
         $this->assertInstanceOf('UserGateway', $this->provider->getUserGateway());
-    }
-
-    public function testGetSessionProcessor()
-    {
-        $this->assertInstanceOf('Processors\SessionInterface', $this->provider->getSessionProcessor());
-    }
-
-    public function testGetCookieProcessor()
-    {
-        $this->assertInstanceOf('Processors\CookieInterface', $this->provider->getCookieProcessor());
     }
 }
